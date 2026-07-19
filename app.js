@@ -477,9 +477,10 @@ quoteAddSaveButton.onclick = () => {
 };
 
 motivateButton.onclick = () => {
-    const keywords = ["study motivation", "workout motivation", "self improvement motivation playlist"];
-    const q = keywords[Math.floor(Math.random() * keywords.length)];
-    window.open(`https://www.youtube.com/results?search_query=%EB%8F%99%EA%B8%B0%EB%B6%80%EC%97%AC`, "_blank");
+    window.open(
+        "https://www.youtube.com/results?search_query=동기부여",
+        "_blank"
+    );
 };
 
 /* ============================= */
