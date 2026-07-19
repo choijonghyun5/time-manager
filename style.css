@@ -767,7 +767,7 @@ main{
     position:absolute;
     right:2px;
     top:0;
-    transform:translateY(+80%);
+    transform:translateY(+100%);
     font-size:6.5px;
     color:var(--sub);
     white-space:nowrap;
