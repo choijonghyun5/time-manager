@@ -1621,37 +1621,10 @@ main{
 
 /* ----- 태그 / 반복요일 선택 (일정 모달) ----- */
 
-.tagPickRow,
-.weekdayPickRow{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-}
 
 .weekdayPickRow{
     display:grid;
     grid-template-columns:repeat(7, 1fr);
-}
-
-.tagPickRow button,
-.weekdayPickRow button{
-    padding:10px 0;
-    text-align:center;
-    border-radius:12px;
-    background:var(--surface-alt);
-    color:var(--sub);
-    font-size:13px;
-    font-weight:600;
-}
-
-.tagPickRow button{
-    padding:9px 14px;
-}
-
-.tagPickRow button.active,
-.weekdayPickRow button.active{
-    background:var(--blue);
-    color:#fff;
 }
 
 .completeButton{

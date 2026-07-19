@@ -7,6 +7,7 @@ const STORAGE_KEY = "timeroutine_data_v1";
 const CUSTOM_QUOTE_KEY = "timeroutine_custom_quotes";
 const THEME_KEY = "timeroutine_theme";
 const METAL_DARK_KEY = "timeroutine_metal_dark";
+const UI_HIDDEN_KEY = "timeroutine_ui_hidden";
 
 
 /* ===== Google Drive 자동 저장 설정 =====
@@ -230,6 +231,7 @@ const navButtons = document.querySelectorAll(".navButton");
 const addButton = document.getElementById("addButton");
 
 const themeButton = document.getElementById("themeButton");
+const uiToggleButton = document.getElementById("uiToggleButton");
 const themeOptionButtons = document.querySelectorAll(".themeOption");
 const metalDarkSettingItem = document.getElementById("metalDarkSettingItem");
 const metalDarkToggle = document.getElementById("metalDarkToggle");
@@ -1623,6 +1625,30 @@ themeButton.onclick = () => {
 };
 
 /* ============================= */
+/* 하단 UI 숨기기/보이기              */
+/* ============================= */
+
+function setUIHidden(hidden){
+    document.body.classList.toggle("uiHidden", hidden);
+    localStorage.setItem(UI_HIDDEN_KEY, hidden);
+    if(uiToggleButton){
+        uiToggleButton.textContent = hidden ? "⬆️" : "⬇️";
+        uiToggleButton.classList.toggle("active", hidden);
+        uiToggleButton.title = hidden ? "하단 UI 보이기" : "하단 UI 숨기기";
+    }
+}
+
+function applyUIHidden(){
+    setUIHidden(localStorage.getItem(UI_HIDDEN_KEY) === "true");
+}
+
+if(uiToggleButton){
+    uiToggleButton.onclick = () => {
+        setUIHidden(!document.body.classList.contains("uiHidden"));
+    };
+}
+
+/* ============================= */
 /* 구글 드라이브 자동 저장           */
 /* ============================= */
 
@@ -1909,6 +1935,7 @@ function renderAll(){
 function init(){
     loadData();
     applyTheme();
+    applyUIHidden();
     updateClock();
     loadWeather();
     pickRandomQuote();
