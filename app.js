@@ -29,10 +29,10 @@ const BACKUP_VERSION = 2;
 /* STATE                         */
 /* ============================= */
 
-let schedules = [];   // {id, date|null, repeatDays:[0-6], title, start:"HH:MM", end:"HH:MM", memo, color, tag, completed, photos:[], occurrences:{date:{completed,photos}}}
+let schedules = [];   // {id, date|null, repeatDays:[0-6], title, start:"HH:MM", end:"HH:MM", memo, color, completed, photos:[], occurrences:{date:{completed,photos}}}
 let ddays = [];        // {id, name, date:"YYYY-MM-DD", color}
 let todos = [];        // {id, date:"YYYY-MM-DD", text, done}
-let templates = [];    // {id, name, items:[{title,start,end,memo,color,tag}]}
+let templates = [];    // {id, name, items:[{title,start,end,memo,color]}
 
 let selectedDate = todayStr();   // 시간표 페이지에서 보고 있는 날짜
 let calendarMonthDate = new Date();
@@ -40,7 +40,6 @@ let currentView = "rect";        // rect | list | circle | calendar
 let scheduleSearchQuery = "";
 let editingEventId = null;
 let editingDdayId = null;
-let editingEventTag = "";
 let editingEventDays = [];
 
 let completingContext = null;    // { scheduleId, dateStr }
@@ -191,7 +190,6 @@ function loadData(){
 
         // 이전 버전 데이터와의 호환을 위한 기본값 보정
         schedules.forEach(s => {
-            if(s.tag === undefined) s.tag = "";
             if(s.repeatDays === undefined) s.repeatDays = [];
             if(s.completed === undefined) s.completed = false;
             if(s.photos === undefined) s.photos = [];
@@ -321,7 +319,6 @@ const calendarGrid = document.getElementById("calendarGrid");
 const calPrevMonthButton = document.getElementById("calPrevMonthButton");
 const calNextMonthButton = document.getElementById("calNextMonthButton");
 
-const eventTagRow = document.getElementById("eventTagRow");
 const eventWeekdayRow = document.getElementById("eventWeekdayRow");
 const eventCompleteRow = document.getElementById("eventCompleteRow");
 const eventCompleteButton = document.getElementById("eventCompleteButton");
@@ -942,7 +939,6 @@ function renderListView(){
             <div class="sliBody">
                 <div class="sliTitle">${s._completed ? "✅ " : ""}${escapeHtml(s.title)}</div>
                 <div class="sliTime">${s.start} - ${s.end}${isRecurring(s) ? " · 반복" : ""}</div>
-                ${s.tag ? `<div class="sliMemo">#${escapeHtml(s.tag)}</div>` : ""}
                 ${s.memo ? `<div class="sliMemo">${escapeHtml(s.memo)}</div>` : ""}
             </div>
             ${thumb}
@@ -1017,15 +1013,6 @@ if(eventColorHex){
 
 let editingEventOccDate = null;
 
-function renderEventTagPicker(){
-    eventTagRow.querySelectorAll("button").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.tag === editingEventTag);
-        btn.onclick = () => {
-            editingEventTag = (editingEventTag === btn.dataset.tag) ? "" : btn.dataset.tag;
-            renderEventTagPicker();
-        };
-    });
-}
 
 function renderEventWeekdayPicker(){
     eventWeekdayRow.querySelectorAll("button").forEach(btn => {
@@ -1055,7 +1042,6 @@ function openEventModal(id, prefillStart, occDate){
         eventEndInput.value = s.end;
         eventMemoInput.value = s.memo || "";
         selectedEventColor = s.color;
-        editingEventTag = s.tag || "";
         editingEventDays = s.repeatDays ? [...s.repeatDays] : [];
         eventDeleteRow.classList.remove("hidden");
 
@@ -1070,14 +1056,12 @@ function openEventModal(id, prefillStart, occDate){
         eventEndInput.value = `${String(endH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         eventMemoInput.value = "";
         selectedEventColor = COLOR_PRESETS[currentEventPreset].colors[0];
-        editingEventTag = "";
         editingEventDays = [];
         eventDeleteRow.classList.add("hidden");
         eventCompleteRow.classList.add("hidden");
     }
 
     setupEventColorPicker();
-    renderEventTagPicker();
     renderEventWeekdayPicker();
     eventModal.classList.add("show");
 }
@@ -1102,7 +1086,6 @@ eventSaveButton.onclick = () => {
     if(editingEventId){
         const s = schedules.find(x => x.id === editingEventId);
         s.title = title; s.start = start; s.end = end; s.memo = memo; s.color = selectedEventColor;
-        s.tag = editingEventTag;
         s.repeatDays = [...editingEventDays];
         if(s.repeatDays.length === 0 && !s.date) s.date = selectedDate;
     }else{
@@ -1113,7 +1096,6 @@ eventSaveButton.onclick = () => {
             repeatDays: isRepeat ? [...editingEventDays] : [],
             title, start, end, memo,
             color: selectedEventColor,
-            tag: editingEventTag,
             completed: false,
             photos: [],
             occurrences: {}
@@ -1527,7 +1509,7 @@ if(saveTemplateButton){
         templates.push({
             id: uid(),
             name: name.trim(),
-            items: list.map(s => ({ title: s.title, start: s.start, end: s.end, memo: s.memo, color: s.color, tag: s.tag }))
+            items: list.map(s => ({ title: s.title, start: s.start, end: s.end, memo: s.memo, color: s.color}))
         });
         saveData();
         renderTemplateChips();
@@ -1544,7 +1526,7 @@ function applyTemplate(id){
         schedules.push({
             id: uid(), date: selectedDate, repeatDays: [],
             title: item.title, start: item.start, end: item.end,
-            memo: item.memo, color: item.color, tag: item.tag,
+            memo: item.memo, color: item.color,
             completed: false, photos: [], occurrences: {}
         });
     });
