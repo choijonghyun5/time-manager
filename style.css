@@ -1387,22 +1387,31 @@ main{
     overflow:auto;
     background:var(--surface);
     border-radius:34px 34px 0 0;
-    padding:28px;
+    padding:44px 28px 28px;
     animation:slideUp .35s ease;
-    touch-action:pan-y;
 }
 
-.modalSheet::before{
-    content:"";
+.sheetCloseButton{
     position:absolute;
-    top:10px;
+    top:12px;
     left:50%;
     transform:translateX(-50%);
-    width:36px;
-    height:4px;
-    border-radius:3px;
-    background:var(--sub);
-    opacity:.35;
+    width:56px;
+    height:24px;
+    border-radius:14px;
+    background:var(--surface-alt);
+    color:var(--sub);
+    font-size:16px;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:5;
+    transition:transform .15s ease;
+}
+
+.sheetCloseButton:active{
+    transform:translateX(-50%) scale(.92);
 }
 
 @keyframes slideUp{

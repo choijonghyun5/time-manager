@@ -1743,59 +1743,26 @@ function setupSwipeToggle(){
 setupSwipeToggle();
 
 /* ============================= */
-/* 입력창(모달) 스와이프로 닫기        */
+/* 입력창(모달) 닫기 버튼             */
 /* ============================= */
 
-function setupModalSwipeClose(){
-    const DISMISS_THRESHOLD = 90;
-    const MOVE_TOLERANCE = 8;
-
+function setupModalCloseButtons(){
     document.querySelectorAll(".modal").forEach(modal => {
         const sheet = modal.querySelector(".modalSheet");
-        if(!sheet) return;
+        if(!sheet || sheet.querySelector(".sheetCloseButton")) return;
 
-        let startY = 0;
-        let dragging = false;
-        let moved = false;
-        let startedAtTop = false;
-        let pointerId = null;
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "sheetCloseButton";
+        closeBtn.setAttribute("aria-label", "닫기");
+        closeBtn.textContent = "⌄";
+        closeBtn.onclick = () => modal.classList.remove("show");
 
-        sheet.addEventListener("pointerdown", (e) => {
-            // 시트가 맨 위까지 스크롤된 상태에서만 닫기 드래그를 시작 (내부 스크롤과 충돌 방지)
-            startedAtTop = sheet.scrollTop <= 0;
-            startY = e.clientY;
-            dragging = true;
-            moved = false;
-            pointerId = e.pointerId;
-        });
-
-        sheet.addEventListener("pointermove", (e) => {
-            if(!dragging || e.pointerId !== pointerId || !startedAtTop) return;
-            const dy = e.clientY - startY;
-            if(Math.abs(dy) > MOVE_TOLERANCE) moved = true;
-            if(moved && dy > 0){
-                sheet.style.transition = "none";
-                sheet.style.transform = `translateY(${dy}px)`;
-            }
-        });
-
-        function endDrag(e){
-            if(!dragging || e.pointerId !== pointerId) return;
-            dragging = false;
-            sheet.style.transition = "";
-            const dy = e.clientY - startY;
-            sheet.style.transform = "";
-            if(startedAtTop && moved && dy > DISMISS_THRESHOLD){
-                modal.classList.remove("show");
-            }
-        }
-
-        sheet.addEventListener("pointerup", endDrag);
-        sheet.addEventListener("pointercancel", endDrag);
+        sheet.insertBefore(closeBtn, sheet.firstChild);
     });
 }
 
-setupModalSwipeClose();
+setupModalCloseButtons();
 
 /* ============================= */
 /* 구글 드라이브 자동 저장           */
