@@ -280,6 +280,8 @@ const eventEndInput = document.getElementById("eventEndInput");
 const eventMemoInput = document.getElementById("eventMemoInput");
 const eventPresetRow = document.getElementById("eventPresetRow");
 const eventColorRow = document.getElementById("eventColorRow");
+const eventColorPicker = document.getElementById("eventColorPicker");
+const eventColorHex = document.getElementById("eventColorHex");
 const eventSaveButton = document.getElementById("eventSaveButton");
 const eventCancelButton = document.getElementById("eventCancelButton");
 const eventDeleteRow = document.getElementById("eventDeleteRow");
@@ -765,7 +767,7 @@ if(searchAddButton){
 
 const WEEK_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
-const DEFAULT_ROW_HEIGHT = 32;   // 시간당 고정 높이(px) - 화면에 맞춘 자동 조절 없이 항상 이 값 사용
+const DEFAULT_ROW_HEIGHT = 26;   // 시간당 고정 높이(px) - 화면에 맞춘 자동 조절 없이 항상 이 값 사용
 const DEFAULT_RANGE_START_HOUR = 0;
 const DEFAULT_RANGE_END_HOUR = 24;
 
@@ -970,6 +972,10 @@ function renderListView(){
 /* 일정 추가 / 수정 모달             */
 /* ============================= */
 
+function isValidHexColor(str){
+    return /^#([0-9a-fA-F]{6})$/.test(str);
+}
+
 function setupEventColorPicker(){
     renderPresetRow(eventPresetRow, currentEventPreset, (key) => {
         currentEventPreset = key;
@@ -979,6 +985,38 @@ function setupEventColorPicker(){
     renderColorRow(eventColorRow, currentEventPreset, selectedEventColor, (c) => {
         selectedEventColor = c;
         setupEventColorPicker();
+    });
+    if(eventColorPicker) eventColorPicker.value = selectedEventColor;
+    if(eventColorHex) eventColorHex.value = selectedEventColor.toUpperCase();
+}
+
+if(eventColorPicker){
+    eventColorPicker.addEventListener("input", () => {
+        selectedEventColor = eventColorPicker.value;
+        eventColorHex.value = selectedEventColor.toUpperCase();
+        renderPresetRow(eventPresetRow, currentEventPreset, (key) => {
+            currentEventPreset = key;
+            selectedEventColor = COLOR_PRESETS[key].colors[0];
+            setupEventColorPicker();
+        });
+        renderColorRow(eventColorRow, currentEventPreset, selectedEventColor, (c) => {
+            selectedEventColor = c;
+            setupEventColorPicker();
+        });
+    });
+}
+
+if(eventColorHex){
+    eventColorHex.addEventListener("change", () => {
+        let value = eventColorHex.value.trim();
+        if(value && value[0] !== "#") value = `#${value}`;
+        if(isValidHexColor(value)){
+            selectedEventColor = value;
+            setupEventColorPicker();
+        }else{
+            showToast("올바른 색상 코드가 아니에요. 예: #4F8CFF", { icon: "⚠️" });
+            eventColorHex.value = selectedEventColor.toUpperCase();
+        }
     });
 }
 
