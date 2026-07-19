@@ -1453,11 +1453,30 @@ main{
     color:var(--text);
 }
 
+.inputGroup input[type="time"],
+.inputGroup input[type="date"]{
+    display:block;
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    box-sizing:border-box;
+    padding:16px 8px;
+    font-size:15px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
 .doubleRow{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:16px;
     min-width:0;
+}
+
+.doubleRow .inputGroup input[type="time"]{
+    padding-left:4px;
+    padding-right:4px;
+    font-size:14px;
 }
 
 .modalButtons{
