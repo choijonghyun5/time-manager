@@ -327,6 +327,8 @@ const calPrevMonthButton = document.getElementById("calPrevMonthButton");
 const calNextMonthButton = document.getElementById("calNextMonthButton");
 
 const eventWeekdayRow = document.getElementById("eventWeekdayRow");
+const eventDateInput = document.getElementById("eventDateInput");
+const eventDateGroup = document.getElementById("eventDateGroup");
 const eventCompleteRow = document.getElementById("eventCompleteRow");
 const eventCompleteButton = document.getElementById("eventCompleteButton");
 
@@ -1034,6 +1036,9 @@ function renderEventWeekdayPicker(){
             renderEventWeekdayPicker();
         };
     });
+    if(eventDateGroup){
+        eventDateGroup.classList.toggle("hidden", editingEventDays.length > 0);
+    }
 }
 
 function openEventModal(id, prefillStart, occDate){
@@ -1050,6 +1055,7 @@ function openEventModal(id, prefillStart, occDate){
         eventMemoInput.value = s.memo || "";
         selectedEventColor = s.color;
         editingEventDays = s.repeatDays ? [...s.repeatDays] : [];
+        if(eventDateInput) eventDateInput.value = s.date || editingEventOccDate;
         eventDeleteRow.classList.remove("hidden");
 
         const alreadyDone = getOccState(s, editingEventOccDate).completed;
@@ -1064,6 +1070,7 @@ function openEventModal(id, prefillStart, occDate){
         eventMemoInput.value = "";
         selectedEventColor = COLOR_PRESETS[currentEventPreset].colors[0];
         editingEventDays = [];
+        if(eventDateInput) eventDateInput.value = editingEventOccDate;
         eventDeleteRow.classList.add("hidden");
         eventCompleteRow.classList.add("hidden");
     }
@@ -1090,16 +1097,23 @@ eventSaveButton.onclick = () => {
         return;
     }
 
+    const isRepeat = editingEventDays.length > 0;
+    const chosenDate = (eventDateInput && eventDateInput.value) || editingEventOccDate || selectedDate;
+
+    if(!isRepeat && !chosenDate){
+        showToast("날짜를 선택해주세요.", { icon: "📅" });
+        return;
+    }
+
     if(editingEventId){
         const s = schedules.find(x => x.id === editingEventId);
         s.title = title; s.start = start; s.end = end; s.memo = memo; s.color = selectedEventColor;
         s.repeatDays = [...editingEventDays];
-        if(s.repeatDays.length === 0 && !s.date) s.date = selectedDate;
+        s.date = isRepeat ? null : chosenDate;
     }else{
-        const isRepeat = editingEventDays.length > 0;
         schedules.push({
             id: uid(),
-            date: isRepeat ? null : (editingEventOccDate || selectedDate),
+            date: isRepeat ? null : chosenDate,
             repeatDays: isRepeat ? [...editingEventDays] : [],
             title, start, end, memo,
             color: selectedEventColor,
@@ -1108,7 +1122,9 @@ eventSaveButton.onclick = () => {
             occurrences: {}
         });
     }
-    if(editingEventOccDate){
+    if(!isRepeat && chosenDate){
+        selectedDate = chosenDate;
+    }else if(editingEventOccDate){
         selectedDate = editingEventOccDate;
     }
 
