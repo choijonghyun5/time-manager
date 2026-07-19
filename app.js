@@ -18,7 +18,7 @@ const UI_HIDDEN_KEY = "timeroutine_ui_hidden";
    5) 발급받은 클라이언트 ID를 아래에 붙여넣기
 ====================================== */
 
-const GOOGLE_CLIENT_ID = "516093946835-qkq6q5tloe2f5p9dmucmafq07nrdbadp.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const DRIVE_FILE_NAME = "timeroutine_app_backup.json";
 const DRIVE_FILE_ID_KEY = "timeroutine_drive_file_id";
@@ -313,6 +313,8 @@ const captureArea = document.getElementById("captureArea");
 
 const circleView = document.getElementById("circleView");
 const clockSvg = document.getElementById("clockSvg");
+const clockWrap = document.getElementById("clockWrap");
+const clockTooltip = document.getElementById("clockTooltip");
 
 const calendarView = document.getElementById("calendarView");
 const calendarMonthLabel = document.getElementById("calendarMonthLabel");
@@ -1347,6 +1349,31 @@ function arcPath(cx, cy, rOuter, rInner, startDeg, endDeg){
     ].join(" ");
 }
 
+function showClockTooltip(point, title, start, end, color){
+    if(!clockTooltip || !clockSvg || !clockWrap) return;
+    const wrapRect = clockWrap.getBoundingClientRect();
+    const svgRect = clockSvg.getBoundingClientRect();
+    const scale = svgRect.width / 340;
+    const x = (svgRect.left - wrapRect.left) + point.x * scale;
+    const y = (svgRect.top - wrapRect.top) + point.y * scale;
+
+    clockTooltip.innerHTML = `
+        <div class="sbTooltipTitle">${title}</div>
+        <div class="sbTooltipTime"><span class="sbTooltipDot" style="--dot-color:${color}"></span>${start}-${end}</div>
+    `;
+    clockTooltip.style.left = `${x}px`;
+    clockTooltip.style.top = `${y}px`;
+    clockTooltip.classList.add("show");
+}
+
+function hideClockTooltip(){
+    if(clockTooltip) clockTooltip.classList.remove("show");
+}
+
+document.addEventListener("pointerdown", (e) => {
+    if(!e.target.closest || !e.target.closest(".clockArc")) hideClockTooltip();
+});
+
 function renderCircleTimetable(){
     if(!clockSvg) return;
 
@@ -1365,7 +1392,8 @@ function renderCircleTimetable(){
         const startAngle = (minutesFromHHMM(s.start) / 1440) * 360;
         const endAngle = (minutesFromHHMM(s.end) / 1440) * 360;
         const d = arcPath(cx, cy, rOuter, rInner, startAngle, endAngle);
-        svg += `<path d="${d}" fill="${s.color}" class="clockArc" data-id="${s.id}" opacity="${s._completed ? 0.45 : 0.95}" stroke="var(--surface)" stroke-width="1.5"></path>`;
+        const blockTitle = `${s._completed ? "✅ " : ""}${escapeHtml(s.title)}`;
+        svg += `<path d="${d}" fill="${s.color}" class="clockArc" data-id="${s.id}" data-title="${blockTitle.replace(/"/g,"&quot;")}" data-start="${s.start}" data-end="${s.end}" data-color="${s.color}" data-start-angle="${startAngle}" data-end-angle="${endAngle}" opacity="${s._completed ? 0.45 : 0.95}" stroke="var(--surface)" stroke-width="1.5"></path>`;
     });
 
     const label = formatDateLabel(selectedDate);
@@ -1373,12 +1401,27 @@ function renderCircleTimetable(){
     svg += `<text x="${cx}" y="${cy+14}" text-anchor="middle" class="clockLabel">${selectedDate === todayStr() ? "오늘" : label.main}</text>`;
 
     clockSvg.innerHTML = svg;
+    hideClockTooltip();
 
     clockSvg.querySelectorAll(".clockArc").forEach(path => {
         path.onclick = (e) => {
             e.stopPropagation();
             openEventModal(path.dataset.id);
         };
+
+        const showTip = () => {
+            const startAngle = parseFloat(path.dataset.startAngle);
+            const endAngle = parseFloat(path.dataset.endAngle);
+            let midAngle = (startAngle + endAngle) / 2;
+            if(endAngle < startAngle) midAngle = ((startAngle + endAngle + 360) / 2) % 360;
+            const midR = (rOuter + rInner) / 2;
+            const p = polarToCartesian(cx, cy, midR, midAngle);
+            showClockTooltip(p, path.dataset.title, path.dataset.start, path.dataset.end, path.dataset.color);
+        };
+
+        path.addEventListener("pointerenter", showTip);
+        path.addEventListener("pointerdown", showTip);
+        path.addEventListener("pointerleave", hideClockTooltip);
     });
 
     const bgRing = document.getElementById("clockBgRing");

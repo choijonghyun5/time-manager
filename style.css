@@ -1787,6 +1787,7 @@ body.uiHidden .restoreHandle{
 /* ===================================== */
 
 .clockWrap{
+    position:relative;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -1796,6 +1797,39 @@ body.uiHidden .restoreHandle{
     border-radius:28px;
     box-shadow:var(--shadow);
     overflow:visible;
+}
+
+.clockTooltip{
+    position:absolute;
+    left:0;
+    top:0;
+    transform:translate(-50%, -100%) translateY(-10px);
+    background:rgba(24,24,28,.92);
+    color:#fff;
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:11px;
+    line-height:1.4;
+    white-space:nowrap;
+    box-shadow:0 10px 24px rgba(0,0,0,.28);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s ease;
+    z-index:30;
+}
+
+.clockTooltip.show{
+    opacity:1;
+}
+
+.clockTooltip::after{
+    content:"";
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:rgba(24,24,28,.92);
 }
 
 #circleView{
