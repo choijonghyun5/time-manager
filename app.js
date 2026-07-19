@@ -29,7 +29,7 @@ const BACKUP_VERSION = 2;
 /* STATE                         */
 /* ============================= */
 
-let schedules = [];   // {id, date|null, repeatDays:[0-6], title, start:"HH:MM", end:"HH:MM", memo, color, tag, notifyMinutes, completed, photos:[], occurrences:{date:{completed,photos}}}
+let schedules = [];   // {id, date|null, repeatDays:[0-6], title, start:"HH:MM", end:"HH:MM", memo, color, tag, completed, photos:[], occurrences:{date:{completed,photos}}}
 let ddays = [];        // {id, name, date:"YYYY-MM-DD", color}
 let todos = [];        // {id, date:"YYYY-MM-DD", text, done}
 let templates = [];    // {id, name, items:[{title,start,end,memo,color,tag}]}
@@ -1056,7 +1056,6 @@ function openEventModal(id, prefillStart, occDate){
         selectedEventColor = s.color;
         editingEventTag = s.tag || "";
         editingEventDays = s.repeatDays ? [...s.repeatDays] : [];
-        eventNotifySelect.value = String(s.notifyMinutes || 0);
         eventDeleteRow.classList.remove("hidden");
 
         const alreadyDone = getOccState(s, editingEventOccDate).completed;
@@ -1089,7 +1088,6 @@ eventSaveButton.onclick = () => {
     const start = eventStartInput.value;
     const end = eventEndInput.value;
     const memo = eventMemoInput.value.trim();
-    const notifyMinutes = Number(eventNotifySelect.value) || 0;
 
     if(!title || !start || !end){
         showToast("제목과 시간을 입력해주세요.", { icon: "⚠️" });
@@ -1105,7 +1103,6 @@ eventSaveButton.onclick = () => {
         s.title = title; s.start = start; s.end = end; s.memo = memo; s.color = selectedEventColor;
         s.tag = editingEventTag;
         s.repeatDays = [...editingEventDays];
-        s.notifyMinutes = notifyMinutes;
         if(s.repeatDays.length === 0 && !s.date) s.date = selectedDate;
     }else{
         const isRepeat = editingEventDays.length > 0;
@@ -1116,7 +1113,6 @@ eventSaveButton.onclick = () => {
             title, start, end, memo,
             color: selectedEventColor,
             tag: editingEventTag,
-            notifyMinutes,
             completed: false,
             photos: [],
             occurrences: {}
@@ -1548,7 +1544,7 @@ function applyTemplate(id){
             id: uid(), date: selectedDate, repeatDays: [],
             title: item.title, start: item.start, end: item.end,
             memo: item.memo, color: item.color, tag: item.tag,
-            notifyMinutes: 0, completed: false, photos: [], occurrences: {}
+            completed: false, photos: [], occurrences: {}
         });
     });
 
@@ -1935,7 +1931,6 @@ function init(){
     pickRandomQuote();
     renderAll();
     updateDriveUI();
-    updateNotifyUI();
 }
 
 document.addEventListener("DOMContentLoaded", init);
