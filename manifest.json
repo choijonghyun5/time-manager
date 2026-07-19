@@ -1,6 +1,6 @@
 {
-  "name": "타임루틴 - 나만의 시간표",
-  "short_name": "타임루틴",
+  "name": "Time Routine",
+  "short_name": "Time Routine",
   "description": "하루를 시간표로 계획하고, 디데이를 관리하고, 오늘의 문구로 하루를 시작하세요.",
   "start_url": "./index.html",
   "scope": "./",
