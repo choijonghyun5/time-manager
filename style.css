@@ -88,6 +88,10 @@ html{
     scroll-behavior:smooth;
 }
 
+html{
+    overflow-x:hidden;
+}
+
 body{
     font-family:
     -apple-system,
@@ -103,7 +107,12 @@ body{
 
     transition:
     background .4s ease,
-    color .3s ease;
+    color .3s ease,
+    padding-bottom .3s ease;
+}
+
+body.uiHidden{
+    padding-bottom:24px;
 }
 
 /* ===================================== */
@@ -1371,6 +1380,7 @@ main{
 }
 
 .modalSheet{
+    position:relative;
     width:100%;
     max-width:760px;
     max-height:90vh;
@@ -1379,6 +1389,20 @@ main{
     border-radius:34px 34px 0 0;
     padding:28px;
     animation:slideUp .35s ease;
+    touch-action:pan-y;
+}
+
+.modalSheet::before{
+    content:"";
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    width:36px;
+    height:4px;
+    border-radius:3px;
+    background:var(--sub);
+    opacity:.35;
 }
 
 @keyframes slideUp{
@@ -1399,6 +1423,7 @@ main{
     flex-direction:column;
     gap:8px;
     margin-bottom:18px;
+    min-width:0;
 }
 
 .inputGroup label{
@@ -1411,6 +1436,8 @@ main{
 .inputGroup textarea,
 .inputGroup select{
     width:100%;
+    max-width:100%;
+    min-width:0;
     padding:16px;
     border-radius:18px;
     background:var(--surface-alt);
@@ -1421,6 +1448,7 @@ main{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:16px;
+    min-width:0;
 }
 
 .modalButtons{
@@ -1480,7 +1508,70 @@ main{
     backdrop-filter:blur(var(--nav-blur));
     box-shadow:var(--shadow);
     z-index:800;
-    transition:background .3s ease;
+    opacity:1;
+    touch-action:none;
+    transition:background .3s ease, transform .3s ease, opacity .3s ease;
+}
+
+body.uiHidden .bottomNav{
+    transform:translate(-50%, 160px);
+    opacity:0;
+    pointer-events:none;
+}
+
+body.uiHidden .fab{
+    transform:translateY(160px);
+    opacity:0;
+    pointer-events:none;
+}
+
+.navHandle{
+    position:absolute;
+    top:6px;
+    left:50%;
+    transform:translateX(-50%);
+    width:36px;
+    height:4px;
+    border-radius:3px;
+    background:var(--sub);
+    opacity:.35;
+}
+
+.restoreHandle{
+    position:fixed;
+    left:50%;
+    bottom:10px;
+    transform:translate(-50%, 40px);
+    width:52px;
+    height:20px;
+    border-radius:12px;
+    background:var(--nav-bg);
+    backdrop-filter:blur(var(--nav-blur));
+    box-shadow:var(--shadow);
+    z-index:800;
+    opacity:0;
+    pointer-events:none;
+    touch-action:none;
+    transition:transform .3s ease, opacity .3s ease;
+}
+
+.restoreHandle::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:28px;
+    height:4px;
+    border-radius:3px;
+    background:var(--sub);
+    opacity:.5;
+}
+
+body.uiHidden .restoreHandle{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%, 0);
 }
 
 .navButton{
@@ -1621,10 +1712,37 @@ main{
 
 /* ----- 태그 / 반복요일 선택 (일정 모달) ----- */
 
+.tagPickRow,
+.weekdayPickRow{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
 
 .weekdayPickRow{
     display:grid;
     grid-template-columns:repeat(7, 1fr);
+}
+
+.tagPickRow button,
+.weekdayPickRow button{
+    padding:10px 0;
+    text-align:center;
+    border-radius:12px;
+    background:var(--surface-alt);
+    color:var(--sub);
+    font-size:13px;
+    font-weight:600;
+}
+
+.tagPickRow button{
+    padding:9px 14px;
+}
+
+.tagPickRow button.active,
+.weekdayPickRow button.active{
+    background:var(--blue);
+    color:#fff;
 }
 
 .completeButton{

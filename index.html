@@ -29,7 +29,6 @@
         <div class="logo">Time<span>.</span></div>
         <div class="headerButtons">
             <button id="ddayHeaderButton" class="ddayHeaderButton" title="디데이">🏁 <span id="ddayHeaderText">디데이</span></button>
-            <button id="uiToggleButton" title="하단 UI 숨기기/보이기">⬇️</button>
             <button id="themeButton">🌙</button>
         </div>
     </header>
@@ -450,7 +449,9 @@
     <!-- BOTTOM NAVIGATION -->
     <!-- ========================= -->
 
-    <nav class="bottomNav">
+    <nav class="bottomNav" id="bottomNav">
+
+        <div class="navHandle" id="navHandle"></div>
 
         <button class="navButton active" data-page="homePage">
             <span class="navIcon">
@@ -493,6 +494,8 @@
         </button>
 
     </nav>
+
+    <div class="restoreHandle" id="restoreHandle" aria-label="UI 보이기"></div>
 
     <script src="app.js"></script>
 

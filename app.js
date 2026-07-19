@@ -231,7 +231,6 @@ const navButtons = document.querySelectorAll(".navButton");
 const addButton = document.getElementById("addButton");
 
 const themeButton = document.getElementById("themeButton");
-const uiToggleButton = document.getElementById("uiToggleButton");
 const themeOptionButtons = document.querySelectorAll(".themeOption");
 const metalDarkSettingItem = document.getElementById("metalDarkSettingItem");
 const metalDarkToggle = document.getElementById("metalDarkToggle");
@@ -1625,28 +1624,178 @@ themeButton.onclick = () => {
 };
 
 /* ============================= */
-/* 하단 UI 숨기기/보이기              */
+/* 하단 UI 숨기기/보이기 (스와이프)      */
 /* ============================= */
+
+const bottomNav = document.getElementById("bottomNav");
+const navHandle = document.getElementById("navHandle");
+const restoreHandle = document.getElementById("restoreHandle");
 
 function setUIHidden(hidden){
     document.body.classList.toggle("uiHidden", hidden);
     localStorage.setItem(UI_HIDDEN_KEY, hidden);
-    if(uiToggleButton){
-        uiToggleButton.textContent = hidden ? "⬆️" : "⬇️";
-        uiToggleButton.classList.toggle("active", hidden);
-        uiToggleButton.title = hidden ? "하단 UI 보이기" : "하단 UI 숨기기";
-    }
 }
 
 function applyUIHidden(){
     setUIHidden(localStorage.getItem(UI_HIDDEN_KEY) === "true");
 }
 
-if(uiToggleButton){
-    uiToggleButton.onclick = () => {
-        setUIHidden(!document.body.classList.contains("uiHidden"));
-    };
+function setupSwipeToggle(){
+    const DISMISS_THRESHOLD = 45;
+    const REVEAL_THRESHOLD = 30;
+    const MOVE_TOLERANCE = 8;
+
+    function setDragTransform(dy){
+        const clamped = Math.max(0, dy);
+        if(bottomNav) bottomNav.style.transform = `translate(-50%, ${clamped}px)`;
+        if(addButton) addButton.style.transform = `translateY(${clamped}px)`;
+    }
+
+    function clearDragTransform(){
+        if(bottomNav) bottomNav.style.transform = "";
+        if(addButton) addButton.style.transform = "";
+    }
+
+    // 아래로 스와이프하면 숨기기 (네비게이션 바 + '+' 버튼)
+    function attachHideDrag(el){
+        if(!el) return;
+        let startY = 0;
+        let dragging = false;
+        let moved = false;
+        let pointerId = null;
+
+        el.addEventListener("pointerdown", (e) => {
+            startY = e.clientY;
+            dragging = true;
+            moved = false;
+            pointerId = e.pointerId;
+        });
+
+        el.addEventListener("pointermove", (e) => {
+            if(!dragging || e.pointerId !== pointerId) return;
+            const dy = e.clientY - startY;
+            if(Math.abs(dy) > MOVE_TOLERANCE) moved = true;
+            if(moved && dy > 0){
+                el.setPointerCapture && el.setPointerCapture(pointerId);
+                bottomNav.style.transition = "none";
+                if(addButton) addButton.style.transition = "none";
+                setDragTransform(dy);
+            }
+        });
+
+        function endDrag(e){
+            if(!dragging || e.pointerId !== pointerId) return;
+            dragging = false;
+            bottomNav.style.transition = "";
+            if(addButton) addButton.style.transition = "";
+            const dy = e.clientY - startY;
+            if(moved && dy > DISMISS_THRESHOLD){
+                clearDragTransform();
+                setUIHidden(true);
+            }else{
+                clearDragTransform();
+            }
+        }
+
+        el.addEventListener("pointerup", endDrag);
+        el.addEventListener("pointercancel", endDrag);
+    }
+
+    // 위로 스와이프(또는 탭)하면 다시 보이기
+    function attachShowDrag(el){
+        if(!el) return;
+        let startY = 0;
+        let dragging = false;
+        let moved = false;
+        let pointerId = null;
+
+        el.addEventListener("pointerdown", (e) => {
+            startY = e.clientY;
+            dragging = true;
+            moved = false;
+            pointerId = e.pointerId;
+        });
+
+        el.addEventListener("pointermove", (e) => {
+            if(!dragging || e.pointerId !== pointerId) return;
+            const dy = e.clientY - startY;
+            if(Math.abs(dy) > MOVE_TOLERANCE) moved = true;
+        });
+
+        function endDrag(e){
+            if(!dragging || e.pointerId !== pointerId) return;
+            dragging = false;
+            const dy = e.clientY - startY;
+            if(!moved || dy < -REVEAL_THRESHOLD || dy === 0){
+                setUIHidden(false);
+            }
+        }
+
+        el.addEventListener("pointerup", endDrag);
+        el.addEventListener("pointercancel", endDrag);
+    }
+
+    attachHideDrag(navHandle);
+    attachHideDrag(bottomNav);
+    attachShowDrag(restoreHandle);
 }
+
+setupSwipeToggle();
+
+/* ============================= */
+/* 입력창(모달) 스와이프로 닫기        */
+/* ============================= */
+
+function setupModalSwipeClose(){
+    const DISMISS_THRESHOLD = 90;
+    const MOVE_TOLERANCE = 8;
+
+    document.querySelectorAll(".modal").forEach(modal => {
+        const sheet = modal.querySelector(".modalSheet");
+        if(!sheet) return;
+
+        let startY = 0;
+        let dragging = false;
+        let moved = false;
+        let startedAtTop = false;
+        let pointerId = null;
+
+        sheet.addEventListener("pointerdown", (e) => {
+            // 시트가 맨 위까지 스크롤된 상태에서만 닫기 드래그를 시작 (내부 스크롤과 충돌 방지)
+            startedAtTop = sheet.scrollTop <= 0;
+            startY = e.clientY;
+            dragging = true;
+            moved = false;
+            pointerId = e.pointerId;
+        });
+
+        sheet.addEventListener("pointermove", (e) => {
+            if(!dragging || e.pointerId !== pointerId || !startedAtTop) return;
+            const dy = e.clientY - startY;
+            if(Math.abs(dy) > MOVE_TOLERANCE) moved = true;
+            if(moved && dy > 0){
+                sheet.style.transition = "none";
+                sheet.style.transform = `translateY(${dy}px)`;
+            }
+        });
+
+        function endDrag(e){
+            if(!dragging || e.pointerId !== pointerId) return;
+            dragging = false;
+            sheet.style.transition = "";
+            const dy = e.clientY - startY;
+            sheet.style.transform = "";
+            if(startedAtTop && moved && dy > DISMISS_THRESHOLD){
+                modal.classList.remove("show");
+            }
+        }
+
+        sheet.addEventListener("pointerup", endDrag);
+        sheet.addEventListener("pointercancel", endDrag);
+    });
+}
+
+setupModalSwipeClose();
 
 /* ============================= */
 /* 구글 드라이브 자동 저장           */
