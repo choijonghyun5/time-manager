@@ -308,6 +308,9 @@ const exportButton = document.getElementById("exportButton");
 const importButton = document.getElementById("importButton");
 const importFile = document.getElementById("importFile");
 
+const welcomeModal = document.getElementById("welcomeModal");
+const welcomeCloseButton = document.getElementById("welcomeCloseButton");
+
 const scheduleSearchInput = document.getElementById("scheduleSearchInput");
 const searchAddButton = document.getElementById("searchAddButton");
 const captureArea = document.getElementById("captureArea");
@@ -1800,7 +1803,13 @@ function setupModalCloseButtons(){
         closeBtn.className = "sheetCloseButton";
         closeBtn.setAttribute("aria-label", "닫기");
         closeBtn.textContent = "⌄";
-        closeBtn.onclick = () => modal.classList.remove("show");
+        closeBtn.onclick = () => {
+            if(modal.id === "welcomeModal"){
+                closeWelcomeGuide();
+            }else{
+                modal.classList.remove("show");
+            }
+        };
 
         sheet.insertBefore(closeBtn, sheet.firstChild);
     });
@@ -2174,6 +2183,50 @@ importFile.onchange = () => {
 };
 
 /* ============================= */
+/* 최초 방문 안내 (홈 화면에 추가)     */
+/* ============================= */
+
+const WELCOME_KEY = "timeroutine_welcome_shown";
+
+function isStandaloneApp(){
+    return (
+        window.navigator.standalone === true ||
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+    );
+}
+
+function isIOSDevice(){
+    const ua = navigator.userAgent || "";
+    const isIOSUA = /iPad|iPhone|iPod/.test(ua);
+    const isIPadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+    return isIOSUA || isIPadOS;
+}
+
+function maybeShowWelcomeGuide(){
+    if(!welcomeModal) return;
+    // 세션 저장소 사용: 브라우저/앱을 나갔다가 다시 들어오면 새 세션으로
+    // 인식되어 안내가 다시 표시됩니다.
+    if(sessionStorage.getItem(WELCOME_KEY)) return;
+    if(isStandaloneApp()){
+        sessionStorage.setItem(WELCOME_KEY, "true");
+        return;
+    }
+    if(!isIOSDevice()) return;
+    welcomeModal.classList.add("show");
+}
+
+function closeWelcomeGuide(){
+    if(welcomeModal){
+        welcomeModal.classList.remove("show");
+    }
+    sessionStorage.setItem(WELCOME_KEY, "true");
+}
+
+if(welcomeCloseButton){
+    welcomeCloseButton.onclick = closeWelcomeGuide;
+}
+
+/* ============================= */
 /* 초기화                          */
 /* ============================= */
 
@@ -2192,6 +2245,11 @@ function init(){
     pickRandomQuote();
     renderAll();
     updateDriveUI();
+    try{
+        maybeShowWelcomeGuide();
+    }catch(err){
+        console.error("설치 안내 표시 중 오류:", err);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
