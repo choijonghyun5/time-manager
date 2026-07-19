@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F5F7FB">
+    <link rel="manifest" href="manifest.json">
+    <title>TimeRoutine</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script
+        src="https://accounts.google.com/gsi/client"
+        async
+        defer
+        onload="if(window.onGisLoad){window.onGisLoad();}"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+
+</head>
+<body>
+
+    <div class="toastContainer" id="toastContainer"></div>
+
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
+
+    <header class="header">
+        <div class="logo">Time<span>.</span></div>
+        <div class="headerButtons">
+            <button id="ddayHeaderButton" class="ddayHeaderButton" title="디데이">🏁 <span id="ddayHeaderText">디데이</span></button>
+            <button id="notifyButton" title="일정 알림">🔔</button>
+            <button id="themeButton">🌙</button>
+        </div>
+    </header>
+
+    <!-- ========================= -->
+    <!-- MAIN -->
+    <!-- ========================= -->
+
+    <main id="app">
+
+        <!-- ========================= -->
+        <!-- HOME -->
+        <!-- ========================= -->
+
+        <section id="homePage" class="page active">
+
+            <div class="heroCard">
+                <p class="today" id="todayDate"></p>
+                <div class="heroClock" id="heroClock">--:--<span id="heroSeconds">--</span></div>
+                <div class="weatherRow" id="weatherRow">
+                    <span class="weatherEmoji" id="weatherEmoji">⛅</span>
+                    <div>
+                        <div class="weatherTemp" id="weatherTemp">--°</div>
+                        <div class="weatherDesc" id="weatherDesc">날씨 불러오는 중</div>
+                    </div>
+                    <div class="weatherLoc" id="weatherLoc"></div>
+                </div>
+            </div>
+
+            <section class="quoteCard">
+                <div class="quoteCardHeader">
+                    <h3>오늘의 문구</h3>
+                    <button id="addQuoteButton" class="quoteAddButton" title="나만의 문구 추가">+</button>
+                </div>
+                <p id="todayQuote"></p>
+                <button class="motivateButton" id="motivateButton">🔥 동기부여 영상 보기</button>
+            </section>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- SCHEDULE (시간표) -->
+        <!-- ========================= -->
+
+        <section id="schedulePage" class="page">
+
+            <div class="scheduleHeadRow">
+                <h2 class="pageTitle">시간표</h2>
+                <button class="pngButton" id="exportPngButton" title="이미지로 저장">🖼️</button>
+            </div>
+
+            <div class="searchRow">
+                <input id="scheduleSearchInput" placeholder="일정 제목·메모 검색">
+                <button class="searchAddButton" id="searchAddButton" title="새 일정 추가">+</button>
+            </div>
+
+            <div class="viewTabs" id="viewTabs">
+                <button class="viewTab active" data-view="rect">사각형</button>
+                <button class="viewTab" data-view="circle">원형</button>
+                <button class="viewTab" data-view="list">리스트</button>
+                <button class="viewTab" data-view="calendar">달력</button>
+            </div>
+
+            <div class="dateNav" id="dateNavBar">
+                <button class="dateNavArrow" id="prevDayButton">‹</button>
+                <div class="dateNavLabel" id="scheduleDateLabel">
+                    -
+                    <small id="scheduleDaySub"></small>
+                </div>
+                <button class="dateNavArrow" id="nextDayButton">›</button>
+            </div>
+
+            <button class="dateNavToday hidden" id="gotoTodayButton">오늘로 이동</button>
+
+            <div id="captureArea">
+
+                <div id="rectView">
+                    <div class="rectTimetable" id="rectTimetable"></div>
+                </div>
+
+                <div id="listView" class="hidden">
+                    <div class="scheduleListWrap" id="scheduleListWrap"></div>
+                </div>
+
+                <div id="circleView" class="hidden">
+                    <div class="clockWrap">
+                        <svg id="clockSvg" viewBox="0 0 340 340" width="340" height="340" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="calendarView" class="hidden">
+                <div class="calendarHeadRow">
+                    <button class="dateNavArrow" id="calPrevMonthButton">‹</button>
+                    <div class="dateNavLabel" id="calendarMonthLabel">-</div>
+                    <button class="dateNavArrow" id="calNextMonthButton">›</button>
+                </div>
+                <div class="calendarWeekRow">
+                    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                </div>
+                <div class="calendarGrid" id="calendarGrid"></div>
+            </div>
+
+            <div class="templateSection">
+                <div class="sectionHead">
+                    <h3>일정 템플릿</h3>
+                    <button class="sectionAddButton" id="saveTemplateButton">+</button>
+                </div>
+                <div class="templateChipRow" id="templateChipRow"></div>
+            </div>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- TODO (할일) -->
+        <!-- ========================= -->
+
+        <section id="todoPage" class="page">
+
+            <h2 class="pageTitle">오늘의 할 일</h2>
+
+            <div class="todoAddRow">
+                <input id="todoInput" placeholder="할 일을 입력하세요 (Enter로 추가)">
+            </div>
+
+            <div class="todoList" id="todoList"></div>
+
+        </section>
+
+        <!-- ========================= -->
+        <!-- SETTINGS -->
+        <!-- ========================= -->
+
+        <section id="settingsPage" class="page">
+
+            <h2 class="pageTitle">설정</h2>
+
+            <div class="settingsList">
+
+                <div class="settingItem themeSettingItem">
+                    <span>🎨 테마</span>
+                    <div class="themeOptions" id="themeOptions">
+                        <button class="themeOption" data-theme="default">
+                            <span class="themeSwatch themeSwatchDefault"></span>
+                            Apple Light
+                        </button>
+                        <button class="themeOption" data-theme="dark">
+                            <span class="themeSwatch themeSwatchDark"></span>
+                            Apple Dark
+                        </button>
+                        <button class="themeOption" data-theme="apple">
+                            <span class="themeSwatch themeSwatchApple"></span>
+                            Black Titanium
+                        </button>
+                        <button class="themeOption" data-theme="glass">
+                            <span class="themeSwatch themeSwatchGlass"></span>
+                            Glass
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settingItem metalDarkSettingItem" id="metalDarkSettingItem">
+                    <span>⛓️ 타이타늄 다크 모드</span>
+                    <button class="switchToggle" id="metalDarkToggle" role="switch" aria-checked="true">
+                        <span class="switchKnob"></span>
+                    </button>
+                </div>
+
+                <div class="settingItem">
+                    <span>🔔 일정 시작 알림</span>
+                    <button class="switchToggle" id="notifyToggle" role="switch" aria-checked="false">
+                        <span class="switchKnob"></span>
+                    </button>
+                </div>
+
+                <button class="settingItem" id="googleDriveButton">
+                    <span>☁️ 구글 드라이브 자동 저장</span>
+                    <span class="driveStatusWrap">
+                        <span id="googleDriveStatus">연결하기</span>
+                        <small id="googleDriveTime"></small>
+                    </span>
+                </button>
+
+                <button class="settingItem" id="exportButton">
+                    <span>📤 전체 백업 (JSON)</span>
+                    <span>›</span>
+                </button>
+
+                <button class="settingItem" id="importButton">
+                    <span>📥 전체 가져오기 (JSON)</span>
+                    <span>›</span>
+                </button>
+
+                <input type="file" id="importFile" accept=".json" hidden>
+
+            </div>
+
+            <div class="appInfo">
+                <h3>TimeRoutine v0.4</h3>
+                <p>
+                    사각형 뷰가 스크롤 없이 월~일이 한 화면에 다 보이도록 칸을 줄였고,
+                    이미지 저장 오류(색상 함수 호환성 문제)를 고쳤어요. 검색창 옆에 빠른 추가 + 버튼을
+                    새로 달았고, 원형 시간표 카드의 세로 여백도 넉넉하게 늘렸어요.
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ========================= -->
+    <!-- ADD BUTTON -->
+    <!-- ========================= -->
+
+    <button id="addButton" class="fab">+</button>
+
+    <!-- ========================= -->
+    <!-- EVENT (SCHEDULE) MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal" id="eventModal">
+        <div class="modalSheet">
+
+            <div class="sheetHeader">
+                <h2 id="eventModalTitle">새 일정</h2>
+            </div>
+
+            <div class="inputGroup">
+                <label>제목</label>
+                <input id="eventTitleInput" placeholder="예) 아침 운동">
+            </div>
+
+            <div class="doubleRow">
+                <div class="inputGroup">
+                    <label>시작 시간</label>
+                    <input type="time" id="eventStartInput" value="09:00">
+                </div>
+                <div class="inputGroup">
+                    <label>종료 시간</label>
+                    <input type="time" id="eventEndInput" value="10:00">
+                </div>
+            </div>
+
+            <div class="inputGroup">
+                <label>메모</label>
+                <textarea id="eventMemoInput" rows="3" placeholder="메모를 입력하세요."></textarea>
+            </div>
+
+            <div class="inputGroup">
+                <label>태그</label>
+                <div class="tagPickRow" id="eventTagRow">
+                    <button data-tag="공부">#공부</button>
+                    <button data-tag="운동">#운동</button>
+                    <button data-tag="학교">#학교</button>
+                    <button data-tag="약속">#약속</button>
+                    <button data-tag="취미">#취미</button>
+                </div>
+            </div>
+
+            <div class="inputGroup">
+                <label>색상 프리셋</label>
+                <div class="presetRow" id="eventPresetRow"></div>
+                <div class="colorPickRow" id="eventColorRow"></div>
+            </div>
+
+            <div class="inputGroup">
+                <label>반복 (요일 선택, 없으면 이 날짜에만)</label>
+                <div class="weekdayPickRow" id="eventWeekdayRow">
+                    <button data-day="0">일</button>
+                    <button data-day="1">월</button>
+                    <button data-day="2">화</button>
+                    <button data-day="3">수</button>
+                    <button data-day="4">목</button>
+                    <button data-day="5">금</button>
+                    <button data-day="6">토</button>
+                </div>
+            </div>
+
+            <div class="inputGroup">
+                <label>시작 전 알림</label>
+                <select id="eventNotifySelect">
+                    <option value="0">알림 없음</option>
+                    <option value="5">5분 전</option>
+                    <option value="10">10분 전</option>
+                    <option value="30">30분 전</option>
+                    <option value="60">1시간 전</option>
+                </select>
+            </div>
+
+            <div class="modalButtons">
+                <button id="eventSaveButton" class="primaryButton">저장</button>
+                <button id="eventCancelButton" class="secondaryButton">취소</button>
+            </div>
+
+            <div class="deleteRow hidden" id="eventCompleteRow">
+                <button class="completeButton" id="eventCompleteButton">✅ 완료 처리 (사진 기록)</button>
+            </div>
+
+            <div class="deleteRow hidden" id="eventDeleteRow">
+                <button class="dangerButton" id="eventDeleteButton">일정 삭제</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DDAY MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal" id="ddayModal">
+        <div class="modalSheet">
+
+            <div class="sheetHeader">
+                <h2 id="ddayModalTitle">새 디데이</h2>
+            </div>
+
+            <div class="inputGroup">
+                <label>이름</label>
+                <input id="ddayNameInput" placeholder="예) 수능, 여행, 시험">
+            </div>
+
+            <div class="inputGroup">
+                <label>날짜</label>
+                <input type="date" id="ddayDateInput">
+            </div>
+
+            <div class="modalButtons">
+                <button id="ddaySaveButton" class="primaryButton">저장</button>
+                <button id="ddayCancelButton" class="secondaryButton">취소</button>
+            </div>
+
+            <div class="deleteRow hidden" id="ddayDeleteRow">
+                <button class="dangerButton" id="ddayDeleteButton">디데이 삭제</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DDAY LIST MODAL (헤더 버튼) -->
+    <!-- ========================= -->
+
+    <div class="modal" id="ddayListModal">
+        <div class="modalSheet">
+
+            <div class="sheetHeader">
+                <h2>디데이</h2>
+            </div>
+
+            <div class="ddayListWrap" id="ddayListWrap"></div>
+
+            <div class="modalButtons">
+                <button id="ddayListAddButton" class="primaryButton">+ 새 디데이</button>
+                <button id="ddayListCloseButton" class="secondaryButton">닫기</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- TODO ADD MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal" id="todoModal">
+        <div class="modalSheet">
+            <div class="sheetHeader">
+                <h2>할 일 추가</h2>
+            </div>
+            <div class="inputGroup">
+                <label>내용</label>
+                <input id="todoModalInput" placeholder="예) 영어 단어 30개 외우기">
+            </div>
+            <div class="modalButtons">
+                <button id="todoModalSaveButton" class="primaryButton">추가</button>
+                <button id="todoModalCancelButton" class="secondaryButton">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- QUOTE MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal" id="quoteModal">
+        <div class="modalSheet">
+            <div class="sheetHeader">
+                <h2>나만의 문구</h2>
+            </div>
+            <div class="inputGroup">
+                <label>새 문구 입력</label>
+                <textarea id="quoteTextInput" rows="3" placeholder="예) 나만의 응원 문구를 적어보세요."></textarea>
+            </div>
+            <div class="modalButtons">
+                <button id="quoteAddSaveButton" class="primaryButton">추가</button>
+                <button id="quoteCloseButton" class="secondaryButton">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- COMPLETE / PHOTO MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal" id="celebrateModal">
+        <div class="modalSheet">
+            <div class="sheetHeader celebrateHeader">
+                <div class="celebrateEmoji">🎉</div>
+                <h2 id="celebrateTitle">일정 완료!</h2>
+                <p class="celebrateSub">기록으로 남길 사진을 올려보세요.</p>
+            </div>
+
+            <div class="inputGroup">
+                <label>기록 사진 (선택)</label>
+                <label class="photoUpload" id="photoUploadArea">
+                    <input type="file" id="photoInput" accept="image/*" hidden>
+                    <div class="photoPlaceholder" id="photoPlaceholder">
+                        <span>📷</span>
+                        <p>탭해서 사진 선택</p>
+                    </div>
+                    <img id="photoPreview" class="photoPreview hidden" alt="기록 사진 미리보기">
+                </label>
+            </div>
+
+            <div class="modalButtons">
+                <button id="celebrateSaveButton" class="primaryButton">완료 저장</button>
+                <button id="celebrateSkipButton" class="secondaryButton">사진 없이 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- PHOTO VIEW MODAL -->
+    <!-- ========================= -->
+
+    <div class="modal photoViewModal" id="photoViewModal">
+        <div class="photoViewContent">
+            <button id="closePhotoView" class="photoViewClose">✕</button>
+            <img id="photoViewImage" alt="기록 사진">
+            <p id="photoViewTitle"></p>
+            <div class="photoViewActions">
+                <button id="deletePhotoButton" class="photoActionButton delete">삭제</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- BOTTOM NAVIGATION -->
+    <!-- ========================= -->
+
+    <nav class="bottomNav">
+
+        <button class="navButton active" data-page="homePage">
+            <span class="navIcon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 11.5 12 4l8 7.5" />
+                    <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
+                </svg>
+            </span>
+            <small>홈</small>
+        </button>
+
+        <button class="navButton" data-page="schedulePage">
+            <span class="navIcon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3.5 2" />
+                </svg>
+            </span>
+            <small>시간표</small>
+        </button>
+
+        <button class="navButton" data-page="todoPage">
+            <span class="navIcon">
+                <svg viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="4" />
+                    <path d="M8 12.5l2.5 2.5L16 9.5" />
+                </svg>
+            </span>
+            <small>할일</small>
+        </button>
+
+        <button class="navButton" data-page="settingsPage">
+            <span class="navIcon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </span>
+            <small>설정</small>
+        </button>
+
+    </nav>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
