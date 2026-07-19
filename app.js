@@ -19,7 +19,7 @@ const UI_HIDDEN_KEY = "timeroutine_ui_hidden";
 ====================================== */
 
 const GOOGLE_CLIENT_ID = "516093946835-qkq6q5tloe2f5p9dmucmafq07nrdbadp.apps.googleusercontent.com";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
 const DRIVE_FILE_NAME = "timeroutine_app_backup.json";
 const DRIVE_FILE_ID_KEY = "timeroutine_drive_file_id";
 const DRIVE_CONNECTED_KEY = "timeroutine_drive_connected";
@@ -301,6 +301,7 @@ const todoModalSaveButton = document.getElementById("todoModalSaveButton");
 const todoModalCancelButton = document.getElementById("todoModalCancelButton");
 
 const googleDriveButton = document.getElementById("googleDriveButton");
+const manualDriveBackupButton = document.getElementById("manualDriveBackupButton");
 const googleDriveStatus = document.getElementById("googleDriveStatus");
 const googleDriveTime = document.getElementById("googleDriveTime");
 const exportButton = document.getElementById("exportButton");
@@ -1948,6 +1949,38 @@ googleDriveButton.onclick = () => {
     }
 };
 
+let manualBackupPending = false;
+
+manualDriveBackupButton.onclick = async () => {
+    if(manualBackupPending) return;
+
+    if(GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")){
+        alert("구글 드라이브 기능을 쓰려면 app.js의 GOOGLE_CLIENT_ID를 먼저 설정해야 합니다.");
+        return;
+    }
+
+    if(!isDriveConnected()){
+        if(!confirm("아직 구글 드라이브에 연결되어 있지 않아요. 지금 연결할까요?")) return;
+        connectGoogleDrive();
+        return;
+    }
+
+    manualBackupPending = true;
+    manualDriveBackupButton.classList.add("disabled");
+    updateDriveUI("저장 중...");
+
+    const ok = await syncToDrive();
+
+    manualBackupPending = false;
+    manualDriveBackupButton.classList.remove("disabled");
+
+    if(ok){
+        showToast("구글 드라이브에 백업했어요.", { icon: "☁️" });
+    }else{
+        showToast("백업에 실패했어요. 연결 상태를 확인 후 다시 시도해주세요.", { icon: "⚠️" });
+    }
+};
+
 function scheduleDriveSync(){
     if(!isDriveConnected()) return;
     clearTimeout(driveSyncTimer);
@@ -1986,6 +2019,15 @@ async function findOrCreateDriveFile(){
         { headers: { Authorization: `Bearer ${googleAccessToken}` } }
     );
     const searchData = await searchRes.json();
+    if(!searchRes.ok){
+        console.error("드라이브 파일 검색 실패", searchData);
+        if(searchRes.status === 401 || searchRes.status === 403){
+            // 토큰이 만료됐거나 권한(스코프)이 부족함 - 재인증 필요
+            googleAccessToken = null;
+            googleTokenExpiry = 0;
+        }
+        throw new Error(searchData.error?.message || "드라이브 파일 검색 실패");
+    }
     if(searchData.files && searchData.files.length > 0){
         localStorage.setItem(DRIVE_FILE_ID_KEY, searchData.files[0].id);
         return searchData.files[0].id;
@@ -2000,6 +2042,14 @@ async function findOrCreateDriveFile(){
         body: JSON.stringify({ name: DRIVE_FILE_NAME, parents: ["appDataFolder"] })
     });
     const createData = await createRes.json();
+    if(!createRes.ok){
+        console.error("드라이브 파일 생성 실패", createData);
+        if(createRes.status === 401 || createRes.status === 403){
+            googleAccessToken = null;
+            googleTokenExpiry = 0;
+        }
+        throw new Error(createData.error?.message || "드라이브 파일 생성 실패");
+    }
     if(createData.id){
         localStorage.setItem(DRIVE_FILE_ID_KEY, createData.id);
         return createData.id;
@@ -2025,7 +2075,7 @@ async function syncToDrive(){
             return false;
         }
         const payload = buildBackupPayload();
-        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        const uploadRes = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
             method: "PATCH",
             headers: {
                 Authorization: `Bearer ${googleAccessToken}`,
@@ -2033,6 +2083,15 @@ async function syncToDrive(){
             },
             body: JSON.stringify(payload)
         });
+        if(!uploadRes.ok){
+            const uploadErr = await uploadRes.json().catch(() => ({}));
+            console.error("드라이브 업로드 실패", uploadErr);
+            if(uploadRes.status === 401 || uploadRes.status === 403){
+                googleAccessToken = null;
+                googleTokenExpiry = 0;
+            }
+            throw new Error(uploadErr.error?.message || "드라이브 업로드 실패");
+        }
         localStorage.setItem(DRIVE_LAST_SYNC_KEY, String(Date.now()));
         updateDriveUI();
         driveSyncInProgress = false;
